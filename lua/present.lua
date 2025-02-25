@@ -268,7 +268,7 @@ local create_window_configurations = function()
       height = body_height,
       style = "minimal",
       border = { " ", " ", " ", " ", " ", " ", " ", " " },
-      col = 10,
+      col = 4,
       row = header_height + 1,
     },
     footer = {
