@@ -218,6 +218,10 @@ local parse_slides = function(lines)
     -- Process the lines: Add one for row->line, add one to skip the header
     local start_of_section = start_row + 2
     for idx = start_of_section, end_row do
+      local line = lines[idx]
+      if not (line == current_slide.title) and vim.startswith(line, "#") then
+        break
+      end
       process_line(idx)
     end
   end
@@ -234,7 +238,7 @@ local create_window_configurations = function()
   local width = vim.o.columns
   local height = vim.o.lines
 
-  local header_height = 1 + 2 -- 1 + border
+  local header_height = 6 + 2 -- 1 + border
   local footer_height = 1 -- 1, no border
   local body_height = height - header_height - footer_height - 2 - 1 -- for our own border
 
@@ -251,9 +255,9 @@ local create_window_configurations = function()
     header = {
       relative = "editor",
       width = width,
-      height = 1,
+      height = header_height - 2,
       style = "minimal",
-      border = "rounded",
+      border = "none",
       col = 0,
       row = 0,
       zindex = 2,
@@ -264,8 +268,8 @@ local create_window_configurations = function()
       height = body_height,
       style = "minimal",
       border = { " ", " ", " ", " ", " ", " ", " ", " " },
-      col = 8,
-      row = 4,
+      col = 10,
+      row = header_height + 1,
     },
     footer = {
       relative = "editor",
@@ -318,14 +322,34 @@ M.start_presentation = function(opts)
     vim.bo[float.buf].filetype = "markdown"
   end)
 
+  local cleanHeader = function(line)
+    -- Remove leading '#' characters and any leading whitespace
+    local cleaned_line = line:gsub("^#+%s*", "")
+    return cleaned_line
+  end
+
+  local split_on_newlines = function(str)
+    local result = {}
+
+    for line in str:gmatch("[^\r\n]+") do
+      if not vim.startswith(line, ":!") then
+        table.insert(result, line)
+      end
+    end
+
+    return result
+  end
+
   local set_slide_content = function(idx)
     local width = vim.o.columns
 
     local slide = state.parsed.slides[idx]
 
-    local padding = string.rep(" ", (width - #slide.title) / 2)
-    local title = padding .. slide.title
-    vim.api.nvim_buf_set_lines(state.floats.header.buf, 0, -1, false, { title })
+    local quotedTitle = '"' .. cleanHeader(slide.title) .. '"'
+    local figletTitle = split_on_newlines(
+      vim.api.nvim_cmd({ cmd = "!", args = { "figlet", "-c", "-w", width, quotedTitle } }, { output = true })
+    )
+    vim.api.nvim_buf_set_lines(state.floats.header.buf, 0, -1, false, figletTitle)
     vim.api.nvim_buf_set_lines(state.floats.body.buf, 0, -1, false, slide.body)
 
     local footer = string.format("  %d / %d | %s", state.current_slide, #state.parsed.slides, state.title)
