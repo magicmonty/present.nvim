@@ -267,7 +267,7 @@ local create_window_configurations = function()
       width = width - 8,
       height = body_height,
       style = "minimal",
-      border = { " ", " ", " ", " ", " ", " ", " ", " " },
+      border = "none",
       col = 4,
       row = header_height + 1,
     },
@@ -276,8 +276,6 @@ local create_window_configurations = function()
       width = width,
       height = 1,
       style = "minimal",
-      -- TODO: Just a border on the top?
-      -- border = "rounded",
       col = 0,
       row = height - 1,
       zindex = 3,
