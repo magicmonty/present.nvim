@@ -339,6 +339,7 @@ M.start_presentation = function(opts)
   end
 
   local set_slide_content = function(idx)
+    local bodyBuf = state.floats.body.buf
     local width = vim.o.columns
 
     local slide = state.parsed.slides[idx]
@@ -348,10 +349,18 @@ M.start_presentation = function(opts)
       vim.api.nvim_cmd({ cmd = "!", args = { "figlet", "-c", "-w", width, quotedTitle } }, { output = true })
     )
     vim.api.nvim_buf_set_lines(state.floats.header.buf, 0, -1, false, figletTitle)
-    vim.api.nvim_buf_set_lines(state.floats.body.buf, 0, -1, false, slide.body)
+    vim.api.nvim_buf_set_lines(bodyBuf, 0, -1, false, slide.body)
 
     local footer = string.format("  %d / %d | %s", state.current_slide, #state.parsed.slides, state.title)
     vim.api.nvim_buf_set_lines(state.floats.footer.buf, 0, -1, false, { footer })
+
+    vim.bo[bodyBuf].modifiable = true
+
+    local success, snacks = pcall(require, "snacks")
+    if success then
+      vim.b[bodyBuf].snacks_image_attached = false
+      snacks.image.doc.attach(bodyBuf)
+    end
   end
 
   present_keymap("n", "n", function()
